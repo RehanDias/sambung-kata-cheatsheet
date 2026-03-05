@@ -2,282 +2,441 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>Pencari Kata</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script>
     tailwind.config = {
       theme: {
         extend: {
           fontFamily: {
-            display: ['Playfair Display', 'serif'],
-            body: ['DM Sans', 'sans-serif'],
-          },
-          colors: {
-            ink: '#1a1a2e',
-            paper: '#f5f0e8',
-            accent: '#c8843a',
-            muted: '#8a8070',
-            light: '#e8e0d0',
+            display: ['Syne', 'sans-serif'],
+            body: ['Plus Jakarta Sans', 'sans-serif'],
           }
         }
       }
     }
   </script>
   <style>
-    body { font-family: 'DM Sans', sans-serif; }
+    * { box-sizing: border-box; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; background: #0d0d14; color: #f0ede8; }
 
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(16px); }
+    .bg-mesh {
+      position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% -10%, rgba(139,92,246,0.18) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 100%, rgba(236,109,60,0.15) 0%, transparent 55%),
+        radial-gradient(ellipse 50% 60% at 50% 50%, rgba(16,185,129,0.05) 0%, transparent 70%);
+    }
+    .grain {
+      position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: 0.035;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+    }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
+    ::-webkit-scrollbar-thumb { background: rgba(139,92,246,0.5); border-radius: 2px; }
+
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(20px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-
-    @keyframes spin-slow {
-      from { transform: rotate(0deg); }
-      to   { transform: rotate(360deg); }
+    @keyframes scaleIn {
+      from { opacity: 0; transform: scale(0.92); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    @keyframes shimmer {
+      0%   { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    @keyframes pulseDot {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50%       { transform: scale(1.5); opacity: 0.5; }
+    }
+    @keyframes floatAnim {
+      0%, 100% { transform: translateY(0px); }
+      50%       { transform: translateY(-8px); }
     }
 
-    .fade-up { animation: fadeUp 0.5s ease forwards; }
-    .spin-slow { animation: spin-slow 3s linear infinite; }
+    .anim-up  { animation: fadeSlideUp 0.6s cubic-bezier(.16,1,.3,1) both; }
+    .float    { animation: floatAnim 5s ease-in-out infinite; }
+
+    .glow-text {
+      background: linear-gradient(135deg, #c084fc 0%, #e879f9 40%, #f97316 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+
+    .search-card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+    }
+
+    .fancy-input {
+      background: rgba(255,255,255,0.05);
+      border: 1.5px solid rgba(255,255,255,0.1);
+      color: #f0ede8; transition: all 0.25s ease; font-size: 16px;
+    }
+    .fancy-input::placeholder { color: rgba(240,237,232,0.25); }
+    .fancy-input:focus {
+      outline: none; border-color: rgba(139,92,246,0.7);
+      background: rgba(139,92,246,0.08);
+      box-shadow: 0 0 0 3px rgba(139,92,246,0.12);
+    }
 
     .word-card {
-      animation: fadeUp 0.3s ease forwards;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      transition: all 0.18s ease;
+      animation: fadeSlideUp 0.35s cubic-bezier(.16,1,.3,1) both;
       opacity: 0;
     }
+    .word-card:hover {
+      background: rgba(139,92,246,0.13);
+      border-color: rgba(139,92,246,0.45);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(139,92,246,0.15);
+    }
+    .word-card:active { transform: translateY(0); }
 
-    input:focus {
-      outline: none;
-      box-shadow: 0 0 0 2px #c8843a;
+    .shimmer-badge {
+      background: linear-gradient(90deg, rgba(139,92,246,0.35) 0%, rgba(233,121,249,0.55) 50%, rgba(139,92,246,0.35) 100%);
+      background-size: 200% auto;
+      animation: shimmer 2.5s linear infinite;
     }
 
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: #e8e0d0; }
-    ::-webkit-scrollbar-thumb { background: #c8843a; border-radius: 3px; }
-
-    .noise-overlay {
-      position: fixed; inset: 0; pointer-events: none; z-index: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
-      opacity: 0.4;
+    .tag-pill {
+      background: rgba(139,92,246,0.15);
+      border: 1px solid rgba(139,92,246,0.3);
+      color: #c084fc;
     }
 
-    .deco-line {
-      background: linear-gradient(90deg, transparent, #c8843a, transparent);
+    .grad-divider { background: linear-gradient(90deg, transparent, rgba(139,92,246,0.5), rgba(233,121,249,0.5), transparent); height: 1px; }
+
+    .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #fbbf24; animation: pulseDot 1.2s ease-in-out infinite; }
+    .dot:nth-child(2) { animation-delay: 0.2s; }
+    .dot:nth-child(3) { animation-delay: 0.4s; }
+
+    .hl { color: #e879f9; font-weight: 700; }
+
+    .result-grid {
+      display: grid; gap: 8px;
+      grid-template-columns: repeat(2, 1fr);
     }
+    @media (min-width: 480px)  { .result-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (min-width: 768px)  { .result-grid { grid-template-columns: repeat(4, 1fr); } }
+    @media (min-width: 1024px) { .result-grid { grid-template-columns: repeat(5, 1fr); } }
+
+    #toast {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
+      background: rgba(139,92,246,0.92); color: white; backdrop-filter: blur(12px);
+      padding: 10px 22px; border-radius: 50px; font-size: 13px; font-weight: 600;
+      transition: transform 0.3s cubic-bezier(.16,1,.3,1); z-index: 999; pointer-events: none;
+      white-space: nowrap;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); }
+
+    .filter-chip {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      cursor: pointer; transition: all 0.18s; user-select: none;
+      color: rgba(255,255,255,0.5);
+    }
+    .filter-chip:hover { background: rgba(139,92,246,0.15); border-color: rgba(139,92,246,0.4); color: #c084fc; }
+    .filter-chip.active { background: rgba(139,92,246,0.25); border-color: rgba(139,92,246,0.6); color: #c084fc; }
+
+    .clear-btn {
+      position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+      width: 22px; height: 22px; background: rgba(255,255,255,0.08);
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all 0.2s; font-size: 11px; color: rgba(255,255,255,0.4);
+      border: none;
+    }
+    .clear-btn:hover { background: rgba(255,255,255,0.18); color: white; }
   </style>
 </head>
 
-<body class="bg-paper text-ink min-h-screen relative">
+<body class="min-h-screen relative overflow-x-hidden">
 
-  <div class="noise-overlay"></div>
+  <div class="bg-mesh"></div>
+  <div class="grain"></div>
+  <div id="toast">✓ Disalin!</div>
 
-  <!-- Header -->
-  <header class="relative z-10 border-b border-light py-8 px-6">
-    <div class="max-w-2xl mx-auto flex items-center justify-between">
-      <div>
-        <p class="text-xs tracking-[0.3em] text-muted uppercase mb-1">Kamus Bahasa Indonesia</p>
-        <h1 class="font-display text-4xl font-black text-ink leading-none">
-          Pencari <span class="text-accent">Kata</span>
-        </h1>
-      </div>
-      <!-- Decorative circle -->
-      <div class="w-14 h-14 rounded-full border-2 border-accent flex items-center justify-center spin-slow opacity-40">
-        <div class="w-2 h-2 rounded-full bg-accent"></div>
-      </div>
-    </div>
-  </header>
+  <div class="relative z-10 min-h-screen flex flex-col">
 
-  <!-- Main -->
-  <main class="relative z-10 max-w-2xl mx-auto px-6 py-10">
+    <!-- HEADER -->
+    <header class="pt-10 pb-6 px-4 sm:px-6 lg:px-8">
+      <div class="max-w-4xl mx-auto text-center">
 
-    <!-- Search Box -->
-    <div class="bg-white border border-light rounded-2xl p-6 shadow-sm mb-6">
-
-      <div class="grid grid-cols-2 gap-4 mb-5">
-        <!-- Huruf Depan -->
-        <div>
-          <label class="block text-xs font-medium tracking-widest uppercase text-muted mb-2">
-            Huruf Depan
-          </label>
-          <input
-            id="depan"
-            type="text"
-            placeholder="contoh: me"
-            class="w-full bg-paper border border-light rounded-xl px-4 py-3 text-ink font-body text-base transition-all duration-200"
-            oninput="cari()"
-          >
+        <div class="flex justify-center mb-5 anim-up" style="animation-delay:0.05s">
+          <span class="tag-pill text-xs tracking-[0.18em] uppercase px-4 py-1.5 rounded-full font-semibold">
+            🇮🇩 Kamus Bahasa Indonesia
+          </span>
         </div>
 
-        <!-- Huruf Belakang -->
-        <div>
-          <label class="block text-xs font-medium tracking-widest uppercase text-muted mb-2">
-            Huruf Belakang
-          </label>
-          <input
-            id="belakang"
-            type="text"
-            placeholder="contoh: an"
-            class="w-full bg-paper border border-light rounded-xl px-4 py-3 text-ink font-body text-base transition-all duration-200"
-            oninput="cari()"
-          >
+        <div class="anim-up" style="animation-delay:0.1s">
+          <h1 class="font-display text-5xl sm:text-6xl lg:text-7xl font-extrabold leading-none">
+            <span class="glow-text">Pencari</span>
+            <span class="text-white"> Kata</span>
+          </h1>
+          <p class="text-white/35 text-sm sm:text-base font-light mt-3 max-w-md mx-auto leading-relaxed">
+            Temukan kata berdasarkan awalan &amp; akhiran dari kamus bahasa Indonesia yang lengkap
+          </p>
         </div>
+
       </div>
+    </header>
 
-      <!-- Status Kamus -->
-      <div id="kamus-status" class="flex items-center gap-2 text-sm text-muted">
-        <div class="w-2 h-2 rounded-full bg-yellow-400 animate-pulse"></div>
-        <span>Memuat kamus...</span>
+    <!-- MAIN -->
+    <main class="flex-1 px-4 sm:px-6 lg:px-8 pb-14">
+      <div class="max-w-4xl mx-auto">
+
+        <!-- Search Card -->
+        <div class="search-card rounded-2xl sm:rounded-3xl p-5 sm:p-7 mb-6 anim-up" style="animation-delay:0.18s">
+
+          <!-- Input Row -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-5">
+            <div>
+              <label class="block text-xs tracking-[0.18em] uppercase text-white/35 mb-2 font-semibold">Awalan Kata</label>
+              <div class="relative">
+                <input id="depan" type="text" placeholder="contoh: me, ber, pe..."
+                  class="fancy-input w-full rounded-xl px-4 py-3.5 pr-10 font-body"
+                  oninput="cari(); toggleClear('depan')" autocomplete="off" spellcheck="false">
+                <button id="clear-depan" class="clear-btn hidden" onclick="clearInput('depan')">✕</button>
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs tracking-[0.18em] uppercase text-white/35 mb-2 font-semibold">Akhiran Kata</label>
+              <div class="relative">
+                <input id="belakang" type="text" placeholder="contoh: an, kan, nya..."
+                  class="fancy-input w-full rounded-xl px-4 py-3.5 pr-10 font-body"
+                  oninput="cari(); toggleClear('belakang')" autocomplete="off" spellcheck="false">
+                <button id="clear-belakang" class="clear-btn hidden" onclick="clearInput('belakang')">✕</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filter panjang -->
+          <div class="mb-5">
+            <label class="block text-xs tracking-[0.18em] uppercase text-white/35 mb-2.5 font-semibold">Panjang Kata</label>
+            <div class="flex flex-wrap gap-2">
+              <button class="filter-chip active text-xs px-3 py-1.5 rounded-lg font-medium" data-val="" onclick="setFilter(this,'')">Semua</button>
+              <button class="filter-chip text-xs px-3 py-1.5 rounded-lg font-medium" data-val="2" onclick="setFilter(this,'2')">2 huruf</button>
+              <button class="filter-chip text-xs px-3 py-1.5 rounded-lg font-medium" data-val="3" onclick="setFilter(this,'3')">3 huruf</button>
+              <button class="filter-chip text-xs px-3 py-1.5 rounded-lg font-medium" data-val="4" onclick="setFilter(this,'4')">4 huruf</button>
+              <button class="filter-chip text-xs px-3 py-1.5 rounded-lg font-medium" data-val="5" onclick="setFilter(this,'5')">5 huruf</button>
+              <button class="filter-chip text-xs px-3 py-1.5 rounded-lg font-medium" data-val="6+" onclick="setFilter(this,'6+')">6+ huruf</button>
+            </div>
+          </div>
+
+          <!-- Status -->
+          <div id="kamus-status" class="flex items-center gap-2.5">
+            <span class="flex gap-1 items-center">
+              <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            </span>
+            <span class="text-yellow-400 text-xs font-medium">Memuat kamus...</span>
+          </div>
+
+        </div>
+
+        <!-- Kamus Loading -->
+        <div id="loading-state" class="text-center py-16">
+          <div class="inline-block relative mb-5">
+            <div class="w-16 h-16 rounded-full border-2 border-purple-500/20 border-t-purple-500 animate-spin"></div>
+            <div class="absolute inset-0 flex items-center justify-center text-2xl float">📖</div>
+          </div>
+          <p class="text-white/35 text-sm">Memuat kamus dari server...</p>
+        </div>
+
+        <!-- Initial State -->
+        <div id="initial-state" class="text-center py-14 anim-up" style="animation-delay:0.28s">
+          <div class="text-5xl mb-5 float inline-block">🔤</div>
+          <p class="text-white/30 text-sm mb-5">Ketik awalan atau akhiran untuk mulai mencari.</p>
+          <div class="flex justify-center gap-2 flex-wrap">
+            <button onclick="quickSearch('me','kan')" class="tag-pill text-xs px-3.5 py-1.5 rounded-full cursor-pointer hover:opacity-75 transition font-medium">me…kan</button>
+            <button onclick="quickSearch('ber','')"   class="tag-pill text-xs px-3.5 py-1.5 rounded-full cursor-pointer hover:opacity-75 transition font-medium">ber…</button>
+            <button onclick="quickSearch('','an')"    class="tag-pill text-xs px-3.5 py-1.5 rounded-full cursor-pointer hover:opacity-75 transition font-medium">…an</button>
+            <button onclick="quickSearch('pe','an')"  class="tag-pill text-xs px-3.5 py-1.5 rounded-full cursor-pointer hover:opacity-75 transition font-medium">pe…an</button>
+            <button onclick="quickSearch('ke','an')"  class="tag-pill text-xs px-3.5 py-1.5 rounded-full cursor-pointer hover:opacity-75 transition font-medium">ke…an</button>
+          </div>
+        </div>
+
+        <!-- Results -->
+        <div id="results-section" class="hidden">
+
+          <!-- Count Bar -->
+          <div class="flex items-center gap-4 mb-5">
+            <div class="grad-divider flex-1"></div>
+            <div id="jumlah-badge" class="shimmer-badge text-white text-xs font-bold tracking-wide px-5 py-1.5 rounded-full"></div>
+            <div class="grad-divider flex-1"></div>
+          </div>
+
+          <!-- Empty -->
+          <div id="empty-state" class="hidden text-center py-14">
+            <div class="text-5xl mb-4 float inline-block">🫙</div>
+            <p class="text-white/50 font-medium mb-1">Tidak ada kata yang cocok.</p>
+            <p class="text-white/25 text-sm">Coba ubah atau kurangi filter pencarian.</p>
+          </div>
+
+          <!-- Grid -->
+          <div id="hasil" class="result-grid"></div>
+
+          <!-- More -->
+          <div id="more-indicator" class="hidden mt-5 text-center">
+            <p class="text-white/25 text-xs">Menampilkan 300 dari <span id="total-hasil" class="text-white/40 font-semibold"></span> kata &nbsp;·&nbsp; Persempit filter untuk melihat lebih banyak</p>
+          </div>
+
+        </div>
+
       </div>
-    </div>
+    </main>
 
-    <!-- Hasil Count -->
-    <div id="jumlah-wrap" class="hidden mb-4">
-      <div class="flex items-center gap-3">
-        <div class="deco-line h-px flex-1"></div>
-        <span id="jumlah" class="text-xs tracking-[0.25em] uppercase font-medium text-muted px-3"></span>
-        <div class="deco-line h-px flex-1"></div>
+    <!-- FOOTER -->
+    <footer class="border-t border-white/5 py-4 px-4 sm:px-6 relative z-10">
+      <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-1.5 text-xs text-white/20">
+        <span>Pencari Kata · Kamus Bahasa Indonesia</span>
+        <span id="total-kata"></span>
       </div>
-    </div>
+    </footer>
 
-    <!-- Empty State -->
-    <div id="empty-state" class="hidden text-center py-12">
-      <div class="text-5xl mb-4">🔍</div>
-      <p class="text-muted font-body">Tidak ada kata yang cocok ditemukan.</p>
-    </div>
-
-    <!-- Hasil Grid -->
-    <div id="hasil" class="grid grid-cols-2 sm:grid-cols-3 gap-2"></div>
-
-    <!-- Loading State -->
-    <div id="loading-state" class="text-center py-12">
-      <div class="inline-block w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin mb-4"></div>
-      <p class="text-muted text-sm">Memuat kamus dari server...</p>
-    </div>
-
-  </main>
-
-  <!-- Footer -->
-  <footer class="relative z-10 border-t border-light py-5 px-6">
-    <div class="max-w-2xl mx-auto flex items-center justify-between">
-      <span class="text-xs text-muted tracking-wide">Pencari Kata · Kamus Bahasa Indonesia</span>
-      <span id="total-kata" class="text-xs text-muted"></span>
-    </div>
-  </footer>
+  </div>
 
   <script>
     let kamus = []
     let sudahCari = false
+    let filterPanjang = ''
 
-    // Load kamus dari GitHub
     fetch("https://raw.githubusercontent.com/RehanDias/s0urce/refs/heads/main/daftar_kata_gabungan.txt")
-      .then(res => res.text())
+      .then(r => r.text())
       .then(text => {
-        kamus = text
-          .split("\n")
-          .map(k => k.trim().toLowerCase())
-          .filter(k => k !== "")
-
-        // Update status
+        kamus = text.split("\n").map(k => k.trim().toLowerCase()).filter(Boolean)
         document.getElementById("loading-state").classList.add("hidden")
         document.getElementById("kamus-status").innerHTML = `
-          <div class="w-2 h-2 rounded-full bg-green-500"></div>
-          <span>Kamus siap · <strong class="text-ink">${kamus.length.toLocaleString('id-ID')}</strong> kata dimuat</span>
+          <span class="w-2 h-2 rounded-full bg-emerald-400 inline-block flex-shrink-0"></span>
+          <span class="text-emerald-400 text-xs font-semibold">Kamus siap</span>
+          <span class="text-white/20 text-xs">·</span>
+          <span class="text-white/40 text-xs"><strong class="text-white/60">${kamus.length.toLocaleString('id-ID')}</strong> kata dimuat</span>
         `
         document.getElementById("total-kata").textContent = kamus.length.toLocaleString('id-ID') + " kata"
-
         if (sudahCari) cari()
       })
       .catch(() => {
         document.getElementById("loading-state").classList.add("hidden")
         document.getElementById("kamus-status").innerHTML = `
-          <div class="w-2 h-2 rounded-full bg-red-500"></div>
-          <span class="text-red-500">Gagal memuat kamus. Periksa koneksi internet.</span>
+          <span class="w-2 h-2 rounded-full bg-red-400 inline-block"></span>
+          <span class="text-red-400 text-xs font-medium">Gagal memuat kamus. Periksa koneksi.</span>
         `
       })
 
+    function setFilter(el, val) {
+      filterPanjang = val
+      document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'))
+      el.classList.add('active')
+      cari()
+    }
+
+    function clearInput(id) {
+      document.getElementById(id).value = ''
+      document.getElementById('clear-' + id).classList.add('hidden')
+      cari()
+    }
+
+    function toggleClear(id) {
+      document.getElementById('clear-' + id).classList.toggle('hidden', !document.getElementById(id).value)
+    }
+
+    function quickSearch(dep, bel) {
+      document.getElementById('depan').value    = dep
+      document.getElementById('belakang').value = bel
+      toggleClear('depan'); toggleClear('belakang')
+      cari()
+    }
+
     function cari() {
       sudahCari = true
-      if (kamus.length === 0) return
+      if (!kamus.length) return
 
       const depan    = document.getElementById("depan").value.trim().toLowerCase()
       const belakang = document.getElementById("belakang").value.trim().toLowerCase()
 
-      // Jika kedua input kosong, kosongkan hasil
-      if (depan === "" && belakang === "") {
-        document.getElementById("hasil").innerHTML = ""
-        document.getElementById("jumlah-wrap").classList.add("hidden")
-        document.getElementById("empty-state").classList.add("hidden")
+      const $initial = document.getElementById("initial-state")
+      const $results = document.getElementById("results-section")
+      const $empty   = document.getElementById("empty-state")
+      const $hasil   = document.getElementById("hasil")
+      const $more    = document.getElementById("more-indicator")
+
+      if (!depan && !belakang) {
+        $initial.classList.remove("hidden")
+        $results.classList.add("hidden")
         return
       }
+
+      $initial.classList.add("hidden")
+      $results.classList.remove("hidden")
 
       const hasil = kamus.filter(kata => {
-        const cocokDepan    = depan    === "" || kata.startsWith(depan)
-        const cocokBelakang = belakang === "" || kata.endsWith(belakang)
-        return cocokDepan && cocokBelakang
+        if (depan    && !kata.startsWith(depan))    return false
+        if (belakang && !kata.endsWith(belakang))   return false
+        if (filterPanjang) {
+          if (filterPanjang === "6+") { if (kata.length < 6)  return false }
+          else                        { if (kata.length !== +filterPanjang) return false }
+        }
+        return true
       })
 
-      // Tampil jumlah
-      const jumlahWrap = document.getElementById("jumlah-wrap")
-      const jumlahEl   = document.getElementById("jumlah")
-      jumlahWrap.classList.remove("hidden")
-      jumlahEl.textContent = hasil.length.toLocaleString('id-ID') + " kata ditemukan"
+      document.getElementById("jumlah-badge").textContent = hasil.length.toLocaleString('id-ID') + " kata ditemukan"
 
-      // Render kartu kata
-      const hasilEl = document.getElementById("hasil")
-
-      if (hasil.length === 0) {
-        hasilEl.innerHTML = ""
-        document.getElementById("empty-state").classList.remove("hidden")
+      if (!hasil.length) {
+        $hasil.innerHTML = ""
+        $empty.classList.remove("hidden")
+        $more.classList.add("hidden")
         return
       }
+      $empty.classList.add("hidden")
 
-      document.getElementById("empty-state").classList.add("hidden")
-
-      // Tampilkan maks 300 hasil untuk performa
       const tampil = hasil.slice(0, 300)
-
-      hasilEl.innerHTML = tampil.map((kata, i) => `
-        <div
-          class="word-card bg-white border border-light rounded-xl px-4 py-3 hover:border-accent hover:bg-amber-50 transition-all duration-150 cursor-default group"
-          style="animation-delay: ${Math.min(i * 15, 300)}ms"
-        >
-          <span class="text-sm font-medium text-ink group-hover:text-accent transition-colors">${hilightKata(kata, depan, belakang)}</span>
+      $hasil.innerHTML = tampil.map((kata, i) => `
+        <div class="word-card rounded-xl px-3 py-2.5 cursor-pointer select-none"
+          style="animation-delay:${Math.min(i*11,240)}ms"
+          onclick="copyKata(this,'${kata.replace(/'/g,"&#39;")}')"
+          title="Klik untuk menyalin">
+          <span class="text-xs sm:text-sm font-medium">${hl(kata, depan, belakang)}</span>
         </div>
       `).join("")
 
       if (hasil.length > 300) {
-        hasilEl.innerHTML += `
-          <div class="col-span-2 sm:col-span-3 text-center py-4 text-sm text-muted">
-            ... dan <strong class="text-ink">${(hasil.length - 300).toLocaleString('id-ID')}</strong> kata lainnya.
-            Persempit pencarian untuk melihat semua.
-          </div>
-        `
+        $more.classList.remove("hidden")
+        document.getElementById("total-hasil").textContent = hasil.length.toLocaleString('id-ID')
+      } else {
+        $more.classList.add("hidden")
       }
     }
 
-    function hilightKata(kata, depan, belakang) {
-      let html = kata
-      // Highlight depan
-      if (depan && kata.startsWith(depan)) {
-        html = `<span class="text-accent font-bold">${depan}</span>${kata.slice(depan.length)}`
+    function hl(kata, dep, bel) {
+      const dL = dep.length, bL = bel.length, kL = kata.length
+      if (!dep && !bel) return kata
+      if (dep && bel && dL + bL >= kL) return `<span class="hl">${kata}</span>`
+      if (dep && kata.startsWith(dep)) {
+        const rest = kata.slice(dL)
+        if (bel && rest.endsWith(bel))
+          return `<span class="hl">${dep}</span>${rest.slice(0, rest.length - bL)}<span class="hl">${bel}</span>`
+        return `<span class="hl">${dep}</span>${rest}`
       }
-      // Highlight belakang (dari html yang sudah ada)
-      if (belakang && kata.endsWith(belakang)) {
-        const plain = kata // gunakan kata asli untuk indexing
-        const startIdx = plain.length - belakang.length
-        if (depan && startIdx < depan.length) {
-          // overlap, skip
-        } else {
-          const before = kata.slice(0, startIdx)
-          const mid = depan ? html.slice(depan.length, startIdx) : html.slice(0, startIdx)
-          if (depan) {
-            html = `<span class="text-accent font-bold">${depan}</span>${kata.slice(depan.length, startIdx)}<span class="text-accent font-bold">${belakang}</span>`
-          } else {
-            html = `${kata.slice(0, startIdx)}<span class="text-accent font-bold">${belakang}</span>`
-          }
-        }
-      }
-      return html
+      if (bel && kata.endsWith(bel))
+        return `${kata.slice(0, kL - bL)}<span class="hl">${bel}</span>`
+      return kata
+    }
+
+    function copyKata(el, kata) {
+      navigator.clipboard.writeText(kata).catch(() => {})
+      el.style.background = 'rgba(139,92,246,0.28)'
+      setTimeout(() => el.style.background = '', 600)
+      const t = document.getElementById('toast')
+      t.textContent = `✓ "${kata}" disalin!`
+      t.classList.add('show')
+      setTimeout(() => t.classList.remove('show'), 2000)
     }
   </script>
 
